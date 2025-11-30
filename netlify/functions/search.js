@@ -1,5 +1,4 @@
 const axios = require('axios');
-const cheerio = require('cheerio');
 
 exports.handler = async function (event, context) {
     const query = event.queryStringParameters.q;
@@ -12,29 +11,31 @@ exports.handler = async function (event, context) {
     }
 
     try {
-        const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+        // World Bank Documents & Reports API
+        const url = `https://search.worldbank.org/api/v2/wds?format=json&qterm=${encodeURIComponent(query)}&fl=docdt,count,display_title,url,abstracts&rows=10`;
 
-        const response = await axios.get(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
-        });
+        const response = await axios.get(url);
+        const data = response.data;
 
-        const $ = cheerio.load(response.data);
         const results = [];
 
-        $('.result').each((i, element) => {
-            if (i >= 10) return false; // Limit to 10 results
+        // The API returns an object where keys are IDs, or sometimes a 'documents' object.
+        // We need to parse it carefully.
+        const documents = data.documents || {};
 
-            const titleElement = $(element).find('.result__a');
-            const title = titleElement.text().trim();
-            const link = titleElement.attr('href');
-            const snippet = $(element).find('.result__snippet').text().trim();
+        for (const key in documents) {
+            if (documents.hasOwnProperty(key)) {
+                const doc = documents[key];
+                // Skip metadata keys if any (API structure can be quirky)
+                if (typeof doc !== 'object') continue;
 
-            if (title && link) {
-                results.push({ title, link, snippet });
+                results.push({
+                    title: doc.display_title,
+                    link: doc.url,
+                    snippet: doc.abstracts ? doc.abstracts.cdata : (doc.docdt || 'No date')
+                });
             }
-        });
+        }
 
         return {
             statusCode: 200,
@@ -44,7 +45,7 @@ exports.handler = async function (event, context) {
         console.error("Search error:", error);
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: "Failed to fetch search results" }),
+            body: JSON.stringify({ error: "Failed to fetch search results from World Bank API" }),
         };
     }
 };

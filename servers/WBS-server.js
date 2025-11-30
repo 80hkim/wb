@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
-const cheerio = require('cheerio');
 const path = require('path');
 
 const app = express();
@@ -18,35 +17,33 @@ app.get('/api/search', async (req, res) => {
     }
 
     try {
-        const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+        // World Bank Documents & Reports API
+        const url = `https://search.worldbank.org/api/v2/wds?format=json&qterm=${encodeURIComponent(query)}&fl=docdt,count,display_title,url,abstracts&rows=10`;
 
-        const response = await axios.get(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
-        });
+        const response = await axios.get(url);
+        const data = response.data;
 
-        const $ = cheerio.load(response.data);
         const results = [];
+        const documents = data.documents || {};
 
-        $('.result').each((i, element) => {
-            if (i >= 10) return false;
+        for (const key in documents) {
+            if (documents.hasOwnProperty(key)) {
+                const doc = documents[key];
+                if (typeof doc !== 'object') continue;
 
-            const titleElement = $(element).find('.result__a');
-            const title = titleElement.text().trim();
-            const link = titleElement.attr('href');
-            const snippet = $(element).find('.result__snippet').text().trim();
-
-            if (title && link) {
-                results.push({ title, link, snippet });
+                results.push({
+                    title: doc.display_title,
+                    link: doc.url,
+                    snippet: doc.abstracts ? doc.abstracts.cdata : (doc.docdt || 'No date')
+                });
             }
-        });
+        }
 
         res.json({ results });
 
     } catch (error) {
         console.error('Search Error:', error);
-        res.status(500).json({ error: 'Failed to fetch search results' });
+        res.status(500).json({ error: 'Failed to fetch search results from World Bank API' });
     }
 });
 
