@@ -42,6 +42,36 @@
             font-weight: bold;
         }
 
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #666;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .tab.active {
+            color: #4a90e2;
+            border-bottom-color: #4a90e2;
+        }
+
+        .mode-content {
+            display: none;
+        }
+
+        .mode-content.active {
+            display: block;
+        }
+
         .translation-box {
             display: flex;
             gap: 20px;
@@ -69,6 +99,15 @@
         textarea:focus {
             outline: 2px solid #4a90e2;
             border-color: transparent;
+        }
+
+        .url-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            margin-bottom: 20px;
         }
 
         .controls {
@@ -118,26 +157,52 @@
             <a href="index.html" class="back-btn">← Home</a>
         </div>
 
-        <div class="controls">
-            <span class="loading" id="loading">Translating...</span>
-            <button class="btn-translate" onclick="translateText()">Translate</button>
+        <div class="tabs">
+            <div class="tab active" onclick="setMode('text')">Text</div>
+            <div class="tab" onclick="setMode('website')">Website</div>
         </div>
 
-        <div class="translation-box">
-            <div class="box">
-                <textarea id="input" placeholder="Enter text to translate..."></textarea>
+        <div class="controls">
+            <span class="loading" id="loading">Translating...</span>
+            <button class="btn-translate" onclick="translateContent()">Translate</button>
+        </div>
+
+        <!-- Text Mode -->
+        <div id="mode-text" class="mode-content active">
+            <div class="translation-box">
+                <div class="box">
+                    <textarea id="inputText" placeholder="Enter text to translate..."></textarea>
+                </div>
+                <div class="box">
+                    <textarea id="outputText" placeholder="Translation will appear here..." readonly></textarea>
+                </div>
             </div>
+        </div>
+
+        <!-- Website Mode -->
+        <div id="mode-website" class="mode-content">
+            <input type="text" id="inputUrl" class="url-input"
+                placeholder="Enter Website URL (e.g., https://example.com)">
             <div class="box">
-                <textarea id="output" placeholder="Translation will appear here..." readonly></textarea>
+                <textarea id="outputUrl" placeholder="Translated website content will appear here..." readonly
+                    style="height: 300px;"></textarea>
             </div>
         </div>
     </div>
 
     <script>
-        async function translateText() {
-            const input = document.getElementById('input').value.trim();
-            if (!input) return;
+        let currentMode = 'text';
 
+        function setMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+
+            document.querySelector(`.tab[onclick="setMode('${mode}')"]`).classList.add('active');
+            document.getElementById(`mode-${mode}`).classList.add('active');
+        }
+
+        async function translateContent() {
             const apiKey = localStorage.getItem('GEMINI_API_KEY');
             if (!apiKey) {
                 alert('Please set your Gemini API Key in Settings first.');
@@ -145,20 +210,32 @@
                 return;
             }
 
+            let content;
+            let outputElement;
+
+            if (currentMode === 'text') {
+                content = document.getElementById('inputText').value.trim();
+                outputElement = document.getElementById('outputText');
+            } else {
+                content = document.getElementById('inputUrl').value.trim();
+                outputElement = document.getElementById('outputUrl');
+            }
+
+            if (!content) return;
+
             const btn = document.querySelector('.btn-translate');
             const loading = document.getElementById('loading');
-            const output = document.getElementById('output');
 
             btn.disabled = true;
             loading.style.display = 'block';
-            output.value = '';
+            outputElement.value = '';
 
             try {
                 const response = await fetch('/.netlify/functions/translate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        text: input,
+                        [currentMode === 'text' ? 'text' : 'url']: content,
                         apiKey: apiKey
                     })
                 });
@@ -168,7 +245,7 @@
                 if (data.error) {
                     alert('Error: ' + data.error);
                 } else {
-                    output.value = data.translation;
+                    outputElement.value = data.translation;
                 }
             } catch (e) {
                 alert('Network Error: ' + e.message);
