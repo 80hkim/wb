@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <title>WB Tools Web</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f2f5;
+      padding: 15px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+
+    .launcher {
+      width: 520px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-icon {
+      font-size: 1.8em;
+    }
+
+    .header-text h1 {
+      font-size: 1.1em;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .header-text .subtitle {
+      font-size: 0.75em;
+      opacity: 0.9;
+    }
+
+    .servers {
+      padding: 15px;
+    }
+
+    .server-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 15px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+
+    .server-info {
+      flex: 1;
+    }
+
+    .server-name {
+      font-size: 0.95em;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .server-desc {
+      font-size: 0.8em;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      height: 36px;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 0.8em;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      padding: 0 15px;
+      transition: opacity 0.2s;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    .btn-open {
+      background: #28a745;
+    }
+
+    .btn-settings {
+      background: #6c757d;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="launcher">
+    <div class="header">
+      <div class="header-icon">🌐</div>
+      <div class="header-text">
+        <h1>WB TOOLS</h1>
+        <div class="subtitle">WEB EDITION</div>
+      </div>
+    </div>
+
+    <div class="servers">
+      <div class="server-row">
+        <div class="server-info">
+          <div class="server-name">SEARCH TOOL</div>
+          <div class="server-desc">Advanced Web Search</div>
+        </div>
+        <div class="button-group">
+          <a href="search.html" class="btn btn-open">OPEN 🌐</a>
+        </div>
+      </div>
+
+      <div class="server-row">
+        <div class="server-info">
+          <div class="server-name">TRANSLATE TOOL</div>
+          <div class="server-desc">AI-Powered Translation</div>
+        </div>
+        <div class="button-group">
+          <a href="translate.html" class="btn btn-open">OPEN 🌐</a>
+        </div>
+      </div>
+      
+       <div class="server-row">
+        <div class="server-info">
+          <div class="server-name">SETTINGS</div>
+          <div class="server-desc">Configure API Keys</div>
+        </div>
+        <div class="button-group">
+          <a href="settings.html" class="btn btn-settings">SETUP ⚙️</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

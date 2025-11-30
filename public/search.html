@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Search - WB Tools</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 800px;
+            max-width: 100%;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #333;
+        }
+
+        .back-btn {
+            text-decoration: none;
+            color: #666;
+            font-weight: bold;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        button {
+            padding: 12px 25px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #218838;
+        }
+
+        #results {
+            margin-top: 20px;
+        }
+
+        .result-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-title {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .result-title a {
+            text-decoration: none;
+            color: #1a0dab;
+        }
+
+        .result-title a:hover {
+            text-decoration: underline;
+        }
+
+        .result-link {
+            font-size: 0.85rem;
+            color: #006621;
+            margin-bottom: 5px;
+        }
+
+        .result-snippet {
+            font-size: 0.9rem;
+            color: #545454;
+            line-height: 1.4;
+        }
+
+        .loading {
+            text-align: center;
+            color: #666;
+            display: none;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Web Search</h1>
+            <a href="index.html" class="back-btn">← Home</a>
+        </div>
+
+        <div class="search-box">
+            <input type="text" id="query" placeholder="Enter search query..."
+                onkeypress="if(event.key==='Enter') search()">
+            <button onclick="search()">Search</button>
+        </div>
+
+        <div id="loading" class="loading">Searching...</div>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        async function search() {
+            const query = document.getElementById('query').value.trim();
+            if (!query) return;
+
+            const resultsDiv = document.getElementById('results');
+            const loading = document.getElementById('loading');
+
+            resultsDiv.innerHTML = '';
+            loading.style.display = 'block';
+
+            try {
+                const response = await fetch('/.netlify/functions/search?q=' + encodeURIComponent(query));
+                const data = await response.json();
+
+                if (data.error) {
+                    resultsDiv.innerHTML = `<div style="color:red">Error: ${data.error}</div>`;
+                } else {
+                    if (data.results.length === 0) {
+                        resultsDiv.innerHTML = '<div>No results found.</div>';
+                    } else {
+                        data.results.forEach(item => {
+                            const div = document.createElement('div');
+                            div.className = 'result-item';
+                            div.innerHTML = `
+                                <div class="result-title"><a href="${item.link}" target="_blank">${item.title}</a></div>
+                                <div class="result-link">${item.link}</div>
+                                <div class="result-snippet">${item.snippet}</div>
+                            `;
+                            resultsDiv.appendChild(div);
+                        });
+                    }
+                }
+            } catch (e) {
+                resultsDiv.innerHTML = `<div style="color:red">Network Error: ${e.message}</div>`;
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+
+</html>

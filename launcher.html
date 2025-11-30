@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <title>WB Launcher</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f2f5;
+      padding: 15px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+
+    .launcher {
+      width: 520px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-icon {
+      font-size: 1.8em;
+    }
+
+    .header-text h1 {
+      font-size: 1.1em;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .header-text .subtitle {
+      font-size: 0.75em;
+      opacity: 0.9;
+    }
+
+    .settings-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: rgba(255, 255, 255, 0.8);
+      transition: color 0.3s;
+    }
+
+    .settings-btn:hover {
+      color: white;
+    }
+
+    .servers {
+      padding: 15px;
+    }
+
+    .server-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 15px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+
+    .status-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #6c757d;
+      flex-shrink: 0;
+    }
+
+    .status-indicator.active {
+      background: #28a745;
+      box-shadow: 0 0 8px rgba(40, 167, 69, 0.5);
+    }
+
+    .server-info {
+      flex: 0 0 200px;
+      min-width: 200px;
+    }
+
+    .server-name {
+      font-size: 0.85em;
+      font-weight: 600;
+      color: #333;
+      white-space: nowrap;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 8px;
+      margin-left: auto;
+    }
+
+    .btn {
+      height: 36px;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 0.8em;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-start {
+      width: 75px;
+      background: #4a90e2;
+    }
+
+    .btn-open {
+      width: 95px;
+      background: #28a745;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-start.running {
+      background: #dc3545;
+    }
+
+    .log-toggle {
+      background: #343a40;
+      color: white;
+      padding: 12px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 0.85em;
+      font-weight: 600;
+    }
+
+    .log-toggle:hover {
+      background: #23272b;
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background-color: white;
+      padding: 25px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 1.2rem;
+      color: #333;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #999;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #555;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+
+    .modal-footer {
+      text-align: right;
+    }
+
+    .save-btn {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .save-btn:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="launcher">
+    <div class="header">
+      <div class="header-icon">🌐</div>
+      <div class="header-text">
+        <h1>WB TOOLS</h1>
+        <div class="subtitle">LAUNCHER</div>
+      </div>
+      <button id="settingsBtn" class="settings-btn" title="Settings">⚙️</button>
+    </div>
+
+    <div class="servers">
+      <div class="server-row">
+        <div class="status-indicator" id="searchLight"></div>
+        <div class="server-info">
+          <div class="server-name">SEARCH SERVER (5555)</div>
+        </div>
+        <div class="button-group">
+          <button class="btn btn-start" id="btnSearch">START</button>
+          <button class="btn btn-open" id="btnOpenSearch">🌐 Chrome</button>
+        </div>
+      </div>
+
+      <div class="server-row">
+        <div class="status-indicator" id="translateLight"></div>
+        <div class="server-info">
+          <div class="server-name">TRANSLATE SERVER (8080)</div>
+        </div>
+        <div class="button-group">
+          <button class="btn btn-start" id="btnTranslate">START</button>
+          <button class="btn btn-open" id="btnOpenTranslate">🌐 Chrome</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="log-toggle" id="logToggle">📋 VIEW LOG</div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Settings</h2>
+        <button class="close-btn" onclick="closeSettings()">×</button>
+      </div>
+      <div class="form-group">
+        <label for="apiKeyInput">Gemini API Key</label>
+        <input type="password" id="apiKeyInput" placeholder="Enter your Gemini API Key">
+        <p style="font-size: 0.8rem; color: #888; margin-top: 5px;">
+          Key is stored locally on your computer.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="save-btn" onclick="saveSettings()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const state = { search: false, translate: false };
+    const logs = [];
+    let logWin = null;
+
+    // Settings Logic
+    const settingsModal = document.getElementById('settingsModal');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const settingsBtn = document.getElementById('settingsBtn');
+
+    settingsBtn.onclick = () => {
+      const savedKey = localStorage.getItem('GEMINI_API_KEY') || '';
+      apiKeyInput.value = savedKey;
+      settingsModal.style.display = 'flex';
+    };
+
+    function closeSettings() {
+      settingsModal.style.display = 'none';
+    }
+
+    function saveSettings() {
+      const key = apiKeyInput.value.trim();
+      if (key) {
+        localStorage.setItem('GEMINI_API_KEY', key);
+        addLog('Settings saved successfully.', 'success');
+        closeSettings();
+      } else {
+        alert('Please enter a valid API Key.');
+      }
+    }
+
+    window.onclick = (event) => {
+      if (event.target === settingsModal) {
+        closeSettings();
+      }
+    };
+
+    // 로그 추가
+    function addLog(msg, type = 'info') {
+      const time = new Date().toLocaleTimeString('ko-KR');
+      const log = { time, msg, type };
+      logs.push(log);
+      if (logs.length > 1000) logs.shift();
+
+      if (logWin && !logWin.closed) {
+        try {
+          const container = logWin.document.getElementById('logContainer');
+          if (container) {
+            const line = logWin.document.createElement('div');
+            line.className = 'log-line ' + type;
+            line.innerHTML = `<span class="log-time">[${time}]</span>${msg}`;
+            container.appendChild(line);
+            container.scrollTop = container.scrollHeight;
+          }
+        } catch (e) { }
+      }
+    }
+
+    // 로그 창 열기
+    document.getElementById('logToggle').onclick = () => {
+      if (logWin && !logWin.closed) {
+        logWin.focus();
+        return;
+      }
+
+      logWin = window.open('', 'LogWindow', 'width=800,height=600');
+      logWin.document.write(`<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>WB Tools - Log</title>
+<style>
+body{font-family:Consolas,monospace;background:#1e1e1e;color:#d4d4d4;padding:15px;margin:0}
+.header{background:#2d2d2d;padding:15px;margin-bottom:15px;border-radius:5px;display:flex;justify-content:space-between;align-items:center}
+.header h1{color:#4a90e2;font-size:1.2em;margin:0}
+.btn-clear{padding:8px 16px;background:#dc3545;color:#fff;border:none;border-radius:5px;cursor:pointer;font-weight:600}
+.log-container{background:#252526;padding:10px;border-radius:5px;overflow-y:auto;max-height:500px}
+.log-line{padding:6px 10px;border-bottom:1px solid #333;word-wrap:break-word;line-height:1.5}
+.log-line.info{color:#9cdcfe}
+.log-line.success{color:#73c991}
+.log-line.error{color:#f48771}
+.log-time{color:#858585;margin-right:10px;font-weight:600}
+</style></head><body>
+<div class="header">
+  <h1>📋 WB Tools Log</h1>
+  <button class="btn-clear" onclick="document.getElementById('logContainer').innerHTML='';opener.postMessage({type:'clearLog'},'*')">Clear</button>
+</div>
+<div class="log-container" id="logContainer"></div>
+</body></html>`);
+
+      setTimeout(() => {
+        logs.forEach(log => {
+          if (logWin && !logWin.closed) {
+            const container = logWin.document.getElementById('logContainer');
+            if (container) {
+              const line = logWin.document.createElement('div');
+              line.className = 'log-line ' + log.type;
+              line.innerHTML = `<span class="log-time">[${log.time}]</span>${log.msg}`;
+              container.appendChild(line);
+            }
+          }
+        });
+        if (logWin && !logWin.closed) {
+          logWin.document.getElementById('logContainer').scrollTop = 999999;
+        }
+      }, 100);
+    };
+
+    window.addEventListener('message', (e) => {
+      if (e.data.type === 'clearLog') {
+        logs.length = 0;
+      }
+    });
+
+    // 서버 토글
+    async function toggleServer(server, name) {
+      const light = document.getElementById(server + 'Light');
+      const btn = document.getElementById('btn' + server.charAt(0).toUpperCase() + server.slice(1));
+
+      if (!state[server]) {
+        // 번역 서버 시작 전 API 키 확인
+        if (server === 'translate') {
+          const apiKey = localStorage.getItem('GEMINI_API_KEY');
+          if (!apiKey) {
+            alert('Please set your Gemini API Key in Settings first.');
+            settingsBtn.click();
+            return;
+          }
+        }
+
+        addLog(name + ' starting...', 'info');
+        btn.disabled = true;
+
+        try {
+          let res;
+          if (window.electron) {
+            if (server === 'search') {
+              res = await window.electron.startSearchServer();
+            } else {
+              const apiKey = localStorage.getItem('GEMINI_API_KEY');
+              res = await window.electron.startTranslateServer(apiKey);
+            }
+          } else {
+            res = { success: true };
+          }
+
+          if (res.success) {
+            state[server] = true;
+            light.classList.add('active');
+            btn.textContent = 'STOP';
+            btn.classList.add('running');
+            addLog(name + ' started ✓', 'success');
+          } else {
+            addLog('Failed: ' + res.message, 'error');
+          }
+        } catch (e) {
+          addLog('Error: ' + e.message, 'error');
+        }
+        btn.disabled = false;
+      } else {
+        addLog(name + ' stopping...', 'info');
+        btn.disabled = true;
+
+        try {
+          const res = window.electron ?
+            await (server === 'search' ?
+              window.electron.stopSearchServer() :
+              window.electron.stopTranslateServer()) :
+            { success: true };
+
+          if (res.success) {
+            state[server] = false;
+            light.classList.remove('active');
+            btn.textContent = 'START';
+            btn.classList.remove('running');
+            addLog(name + ' stopped', 'info');
+          }
+        } catch (e) {
+          addLog('Error: ' + e.message, 'error');
+        }
+        btn.disabled = false;
+      }
+    }
+
+    // 브라우저 열기
+    function openBrowser(server) {
+      const port = server === 'search' ? '5555' : '8080';
+      if (state[server]) {
+        const url = 'http://127.0.0.1:' + port;
+        addLog('Opening ' + url, 'info');
+        if (window.electron) {
+          window.electron.openExternal(url);
+        } else {
+          window.open(url, '_blank');
+        }
+      } else {
+        addLog('Server not running. Please start first.', 'error');
+      }
+    }
+
+    // Electron 이벤트
+    if (window.electron) {
+      window.electron.onServerLog((data) => {
+        addLog('[' + data.server + '] ' + data.message, data.type);
+      });
+
+      window.electron.onServerStopped((server) => {
+        state[server] = false;
+        const light = document.getElementById(server + 'Light');
+        if (light) light.classList.remove('active');
+
+        const btn = document.getElementById('btn' + server.charAt(0).toUpperCase() + server.slice(1));
+        if (btn) {
+          btn.textContent = 'START';
+          btn.classList.remove('running');
+        }
+        addLog(server + ' server stopped unexpectedly', 'error');
+      });
+    }
+
+    // 이벤트 연결
+    document.getElementById('btnSearch').onclick = () => toggleServer('search', 'Search Server');
+    document.getElementById('btnTranslate').onclick = () => toggleServer('translate', 'Translate Server');
+    document.getElementById('btnOpenSearch').onclick = () => openBrowser('search');
+    document.getElementById('btnOpenTranslate').onclick = () => openBrowser('translate');
+
+    // 초기 로그
+    addLog('Launcher Ready ✓', 'success');
+  </script>
+</body>
+
+</html>
